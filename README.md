@@ -1,5 +1,8 @@
 # Just the "foo"
 
+An attempt to figure out what needs to be done to build gradle project via
+maven and have resulting artifacts deployed into maven repo.
+
 Requires:
 
 ```bash
@@ -29,5 +32,5 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.202-b03, mixed mode)
 Run gradle build with IT tests:
 
 ```bash
-gradle clean check
+$ gradle clean check
 ``` 
