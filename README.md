@@ -7,7 +7,7 @@ The code under the `/src` folder is important to the point that it uses
 Elasticsearch gradle plugin which takes care of building of some of the resulting
 artifacts (AFAIK).   
 
-Requires:
+## Requires
 
 ```bash
 $ gradle --version
@@ -41,3 +41,9 @@ $ gradle clean check && ls -n build/distributions/
 -rw-r--r--  1 501  20  11553 Apr 12 16:41 foo-1.0.0.jar
 -rw-r--r--  1 501  20  16004 Apr 12 16:41 foo-1.0.0.zip
 ``` 
+
+## Next steps
+
+Add wrapper for maven to call the gradle build from it and have POM, Zip and Jar
+artifacts deployed into maven repo. Having Javadoc and Sources deployed would
+be nice too.
