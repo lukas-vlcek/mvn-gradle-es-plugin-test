@@ -1,0 +1,34 @@
+---
+"Verify we have cluster with expectd number of nodes":
+  - do:
+      cluster.health:
+        wait_for_nodes: 1
+
+  - is_false:  timed_out
+  - gte:       { number_of_nodes:      1 }
+  - gte:       { number_of_data_nodes: 1 }
+
+---
+"Foo plugin installed on every node":
+  - do:
+      cat.nodes:
+        h: name,id
+        full_id: true
+        format: json
+
+  # we know there is 1 node in this test
+  - set: { 0.id: node0 }
+
+  - do:
+      nodes.info: { }
+
+  # ...now, check that the node has this plugin installed
+  - match: { nodes.$node0.plugins.0.name: foo }
+
+---
+"Finally call the foo API":
+  - do:
+      foo: {}
+
+  - match:
+      $body: /Yo!/

@@ -1,0 +1,13 @@
+{
+  "foo": {
+    "documentation": "https://github.com/lukas-vlcek/mvn-gradle-es-plugin-test/",
+    "methods": ["GET"],
+    "url": {
+      "path": "/_foo",
+      "paths": ["/_foo"],
+      "parts": {},
+      "params": {}
+    },
+    "body": null
+  }
+}

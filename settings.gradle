@@ -1,0 +1,10 @@
+// We must specific maven repo
+//pluginManagement {
+//    repositories {
+//        maven {
+//            url System.getProperty('maven.repo.url')
+//        }
+//    }
+//}
+
+rootProject.name = "foo"

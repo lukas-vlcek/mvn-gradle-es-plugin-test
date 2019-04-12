@@ -1,0 +1,117 @@
+buildscript {
+    repositories {
+//        maven {
+//            url System.getProperty('maven.repo.url')
+//        }
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        classpath "org.elasticsearch.gradle:build-tools:5.6.13" // How can we use ${versions.elasticsearch} here ???
+    }
+}
+
+plugins {
+    id "java"
+    id "checkstyle"
+}
+
+// This temp hack should be needed only for ES 5.6.x it should go awa in ES 6.x or 5.5.x
+// https://discuss.elastic.co/t/if-your-plugin-build-breaks-when-upgrading-to-5-6/101752
+// https://github.com/spinscale/cookiecutter-elasticsearch-ingest-processor/commit/c94205436debb561549b722ea1badedd7a875f7a#diff-16fb65d09b6dcec31a0103baf74c1335R21
+ext.projectSubstitutions = [:]
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'elasticsearch.esplugin'
+//apply plugin: 'maven'
+//apply plugin: 'maven-publish'
+
+// Uncomment if you want to use: System.out.println("Emergency!");
+// Logs are found in build/cluster/integTestCluster*/cwd/run.log
+//forbiddenApis {
+//    ignoreFailures = true
+//}
+
+// license of this project
+licenseFile = rootProject.file('LICENSE.txt')
+// copyright notices
+noticeFile = rootProject.file('NOTICE.txt')
+
+// dependency license check needs can be enabled
+dependencyLicenses.enabled = false
+
+// thirdparty audit needs can be enabled
+thirdPartyAudit.enabled = false
+
+// license header checks can be disabled
+licenseHeaders.enabled = true
+
+// There are only integration tests
+integTestRunner.enabled = true
+test.enabled = false
+
+println "Host: " + java.net.InetAddress.getLocalHost()
+println "Gradle: " + gradle.gradleVersion + " JVM: " + org.gradle.internal.jvm.Jvm.current() + " Groovy: " + GroovySystem.getVersion()
+println "Build: group: '${project.group}', name: '${project.name}', version: '${project.version}'"
+println "Timestamp: " + java.time.Instant.now().atZone(java.time.ZoneId.systemDefault()).toString()
+
+repositories {
+//    maven {
+//            url System.getProperty('maven.repo.url')
+//    }
+    mavenCentral()
+    mavenLocal()
+}
+
+ext {
+    versions = [
+        "elasticsearch": "5.6.13",
+        "log4j"        : "2.11.1",
+        "junit"        : "4.12"
+    ]
+}
+
+configurations {
+    releaseJars {
+        extendsFrom runtime
+        exclude group: "org.elasticsearch"
+        exclude group: "com.fasterxml.jackson.core", module: "jackson-core"
+        exclude group: "org.apache.logging.log4j"
+    }
+}
+
+dependencies {
+    compile "org.elasticsearch:elasticsearch:${versions.elasticsearch}"
+    compile "org.apache.logging.log4j:log4j-api:${versions.log4j}"
+    testCompile "junit:junit:${versions.junit}"
+    releaseJars "${project.group}:${project.name}:${project.version}"
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked,deprecation"
+}
+
+esplugin {
+    licenseFile rootProject.file('LICENSE.txt')
+    noticeFile rootProject.file('NOTICE.txt')
+    name pluginName
+    description pluginDescription
+    classname pluginClassname
+}
+
+integTestCluster {
+    numNodes = 1
+    clusterName = "FooITCluster"
+}
+
+checkstyle {
+    configFile = new File(rootDir, "checkstyle.xml")
+    toolVersion = "8.2"
+}
+
+//artifacts {
+//    archives javadocJar, sourcesJar
+//}
