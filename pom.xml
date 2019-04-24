@@ -38,26 +38,11 @@
     <altDeploymentRepository>${maven.repo.url}</altDeploymentRepository>
   </properties>
 
-  <!--
-    Tying to use maven-deploy-plugin (https://stackoverflow.com/a/42468595) to deploy specific files only.
-  -->
-  <!-- Does not seem we need this ...
-  <distributionManagement>
-    <repository>
-      <id>target.repository</id>
-      <name>Target Repository</name>
-      <url>${maven.repo.url}</url>
-    </repository>
-  </distributionManagement>
-  -->
-
   <build>
     <plugins>
       <plugin>
         <groupId>org.fortasoft</groupId>
         <version>1.0.8</version>
-        <!-- <groupId>codes.rafael.gradlemavenplugin</groupId> -->
-        <!-- <version>1.0.10</version> -->
         <artifactId>gradle-maven-plugin</artifactId>
         <dependencies>
           <dependency>
@@ -96,9 +81,7 @@
               <goal>deploy-file</goal>
             </goals>
             <configuration>
-              <!-- <url>${maven.repo.url}</url> -->
-              <!-- <url>${maven.repo.local}</url> -->
-              <url>file:///Users/lvlcek/.m2/repository</url>
+              <url>${maven.deploy.url}</url>
               <file>${basedir}/build/distributions/${name}-${version}.zip</file>
               <groupId>${groupId}</groupId>
               <artifactId>${artifactId}</artifactId>
@@ -113,9 +96,7 @@
               <goal>deploy-file</goal>
             </goals>
             <configuration>
-              <!-- <url>${maven.repo.url}</url> -->
-              <!-- <url>${maven.repo.local}</url> -->
-              <url>file:///Users/lvlcek/.m2/repository</url>
+              <url>${maven.deploy.url}</url>
               <file>${basedir}/build/distributions/${name}-${version}.jar</file>
               <groupId>${groupId}</groupId>
               <artifactId>${artifactId}</artifactId>

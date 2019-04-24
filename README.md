@@ -1,13 +1,13 @@
 # Just the "foo"
 
-An attempt to figure out what needs to be done to build **gradle** project via
+An example demonstration how to build **gradle** project via
 **maven** and have resulting artifacts deployed into maven repo.
 
-The code under the `/src` folder is important to the point that it uses
-Elasticsearch gradle plugin which takes care of building of some of the resulting
-artifacts (AFAIK).
+The code under the `/src` folder is important to the point that **it uses Elasticsearch gradle plugin** which takes care of building of some of the resulting artifacts (AFAIK). _The theory is that this plugin may break integration between gradle and maven resulting in missing artifacts in maven repo when `mvn deploy` is run. Link to any specific bug report is missing, however, working solution is provided._
 
 ## Build the project using gradle
+
+Notice that depending on version of Elasticsearch \[gradle plugin\] we need to stick to specific versions of gradle and java. The following are used versions for this demonstration.
 
 ### Requires
 
@@ -58,12 +58,15 @@ OS name: "mac os x", version: "10.14.4", arch: "x86_64", family: "mac"
 ```
 
 Running maven requires providing path to maven repository that is used both for
-dependencies resolution and artifact deploy target. In this case I am using
-the default maven repository found in my home folder: `/Users/lvlcek/.m2/repository`. You man need to customize the value.
+dependencies resolution and resulting artifact deployment. In this case I am using
+the default maven repository found in my home folder: `/Users/lvlcek/.m2/repository`. You man need to customize it.
+
+Notice that each `${maven.repo.url}` and `${maven.deploy.url}` variables may require a little different format.
 
 ```bash
 $ mvn -Dmaven.repo.url=local::default::file:///Users/lvlcek/.m2/repository \
-  clean deploy
+      -Dmaven.deploy.url=file:///Users/lvlcek/.m2/repository \
+      clean deploy
 
 [...]
 
@@ -78,41 +81,7 @@ total 200
 
 As we can see the folder `build/distributions/` contains all the artifacts we would like to deploy into target maven repository.
 
-However, maven `deploy` phase deployed only the `pom` file like this:
-
-```bash
-[...]
-[INFO] gradle execution complete
-[INFO] 
-[INFO] --- maven-install-plugin:2.4:install (default-install) @ foo ---
-[INFO] Installing /Users/lvlcek/projects/lukas-vlcek/mvn-gradle-es-plugin-test/pom.xml to /Users/lvlcek/.m2/repository/org/foo/foo/1.0.0/foo-1.0.0.pom
-[INFO] 
-[INFO] --- maven-deploy-plugin:2.7:deploy (default-deploy) @ foo ---
-[INFO] Using alternate deployment repository local::default::file:///Users/lvlcek/.m2/repository
-Uploading to local: file:///Users/lvlcek/.m2/repository/org/foo/foo/1.0.0/foo-1.0.0.pom
-Uploaded to local: file:///Users/lvlcek/.m2/repository/org/foo/foo/1.0.0/foo-1.0.0.pom (2.4 kB at 239 kB/s)
-Downloading from local: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml
-Downloaded from local: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml (290 B at 32 kB/s)
-Uploading to local: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml
-Uploaded to local: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml (290 B at 290 kB/s)
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-```
-
-```bash
-$ ls -n /Users/lvlcek/.m2/repository/org/foo/foo/1.0.0/
-total 32
--rw-r--r--  1 501  20   157 Apr 16 15:40 _remote.repositories
--rw-r--r--  1 501  20  2391 Apr 16 15:07 foo-1.0.0.pom
--rw-r--r--  1 501  20    32 Apr 16 15:39 foo-1.0.0.pom.md5
--rw-r--r--  1 501  20    40 Apr 16 15:39 foo-1.0.0.pom.sha1
-```
-
-Thus I added `maven-deploy-plugin` and configured it to deploy `zip` and `jar` files attaching the `deploy-file` goal to the `deploy` phase.
-See https://github.com/lukas-vlcek/mvn-gradle-es-plugin-test/blob/d68d5b3f2cabf47a46984ba6d2f3840f6801a50d/pom.xml#L91-L126
-
-The result is more promissing now:
+However, by default maven `deploy` phase would deploy only the `pom` artifact, both the `zip` and `jar` artifacts would be missing. To deploy other artifacts we add and configiure **maven-deploy-plugin** (attaching the `deploy-file` goal to the `deploy` phase). See `pom.xml` for details. The following is mvn log excerpt explaining what has really happened.
 
 ```bash
 [...]
@@ -124,7 +93,7 @@ The result is more promissing now:
 [INFO] --- maven-deploy-plugin:3.0.0-M1:deploy (default-deploy) @ foo ---
 [INFO] Using alternate deployment repository local::default::file:///Users/lvlcek/.m2/repository
 Uploading to local::default: file:///Users/lvlcek/.m2/repository/org/foo/foo/1.0.0/foo-1.0.0.pom
-Uploaded to local::default: file:///Users/lvlcek/.m2/repository/org/foo/foo/1.0.0/foo-1.0.0.pom (4.4 kB at 494 kB/s)
+Uploaded to local::default: file:///Users/lvlcek/.m2/repository/org/foo/foo/1.0.0/foo-1.0.0.pom (4.6 kB at 506 kB/s)
 Downloading from local::default: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml
 Downloaded from local::default: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml (290 B at 41 kB/s)
 Uploading to local::default: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml
@@ -133,11 +102,11 @@ Uploaded to local::default: file:///Users/lvlcek/.m2/repository/org/foo/foo/mave
 [INFO] --- maven-deploy-plugin:3.0.0-M1:deploy-file (deploy-file-zip) @ foo ---
 [INFO] pom.xml not found in foo-1.0.0.zip
 Uploading to remote-repository: file:///Users/lvlcek/.m2/repository/org/foo/foo/1.0.0/foo-1.0.0.zip
-Uploaded to remote-repository: file:///Users/lvlcek/.m2/repository/org/foo/foo/1.0.0/foo-1.0.0.zip (16 kB at 4.0 MB/s)
+Uploaded to remote-repository: file:///Users/lvlcek/.m2/repository/org/foo/foo/1.0.0/foo-1.0.0.zip (16 kB at 5.3 MB/s)
 Downloading from remote-repository: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml
-Downloaded from remote-repository: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml (290 B at 145 kB/s)
+Downloaded from remote-repository: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml (290 B at 97 kB/s)
 Uploading to remote-repository: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml
-Uploaded to remote-repository: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml (290 B at 290 kB/s)
+Uploaded to remote-repository: file:///Users/lvlcek/.m2/repository/org/foo/foo/maven-metadata.xml (290 B at 145 kB/s)
 [INFO] 
 [INFO] --- maven-deploy-plugin:3.0.0-M1:deploy-file (deploy-file-jar) @ foo ---
 [INFO] pom.xml not found in foo-1.0.0.jar
@@ -152,29 +121,19 @@ Uploaded to remote-repository: file:///Users/lvlcek/.m2/repository/org/foo/foo/m
 [INFO] ------------------------------------------------------------------------
 ```
 
+And we are happy to see required artifacts were deployed into maven repository. :smile:
+
 ```bash
 $ ls -n /Users/lvlcek/.m2/repository/org/foo/foo/1.0.0/
 total 128
--rw-r--r--  1 501  20    157 Apr 17 15:08 _remote.repositories
--rw-r--r--  1 501  20  11554 Apr 17 15:08 foo-1.0.0.jar
--rw-r--r--  1 501  20     32 Apr 17 15:08 foo-1.0.0.jar.md5
--rw-r--r--  1 501  20     40 Apr 17 15:08 foo-1.0.0.jar.sha1
--rw-r--r--  1 501  20   4444 Apr 17 15:08 foo-1.0.0.pom
--rw-r--r--  1 501  20     32 Apr 17 15:08 foo-1.0.0.pom.md5
--rw-r--r--  1 501  20     40 Apr 17 15:08 foo-1.0.0.pom.sha1
--rw-r--r--  1 501  20  16006 Apr 17 15:08 foo-1.0.0.zip
--rw-r--r--  1 501  20     32 Apr 17 15:08 foo-1.0.0.zip.md5
--rw-r--r--  1 501  20     40 Apr 17 15:08 foo-1.0.0.zip.sha1
-```
-
-## TODO
-
-I need to figure out where to take the target maven repo url in expected format to fill it here:
-https://github.com/lukas-vlcek/mvn-gradle-es-plugin-test/blob/d68d5b3f2cabf47a46984ba6d2f3840f6801a50d/pom.xml#L101
-
-As of writing the var `${maven.repo.url}` is not in expected format.
-It throws the following exception when used:
-
-```
-Failed to deploy artifacts/metadata: Cannot access local::default::file:///Users/lvlcek/.m2/repository with type default using the available connector factories: BasicRepositoryConnectorFactory: Cannot access local::default::file:///Users/lvlcek/.m2/repository using the registered transporter factories: WagonTransporterFactory: java.util.NoSuchElementException
+-rw-r--r--  1 501  20    157 Apr 24 14:20 _remote.repositories
+-rw-r--r--  1 501  20  11549 Apr 24 14:20 foo-1.0.0.jar
+-rw-r--r--  1 501  20     32 Apr 24 14:20 foo-1.0.0.jar.md5
+-rw-r--r--  1 501  20     40 Apr 24 14:20 foo-1.0.0.jar.sha1
+-rw-r--r--  1 501  20   4552 Apr 24 14:20 foo-1.0.0.pom
+-rw-r--r--  1 501  20     32 Apr 24 14:20 foo-1.0.0.pom.md5
+-rw-r--r--  1 501  20     40 Apr 24 14:20 foo-1.0.0.pom.sha1
+-rw-r--r--  1 501  20  16002 Apr 24 14:20 foo-1.0.0.zip
+-rw-r--r--  1 501  20     32 Apr 24 14:20 foo-1.0.0.zip.md5
+-rw-r--r--  1 501  20     40 Apr 24 14:20 foo-1.0.0.zip.sha1
 ```
